@@ -1,48 +1,50 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import useToken from "./hooks/useToken";
-
-async function loginUser(credentials) {
-  return fetch("http://localhost:8080/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-  }).then((data) => data.json());
-}
+import React, { useEffect, useState } from "react";
+import { auth, logInWithEmailAndPassword } from "../firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
-  const { token, setToken } = useToken();
-
-  const [username, setUserName] = useState();
+  const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const [user, loading, error] = useAuthState(auth);
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const token = await loginUser({ username, password });
-    setToken(token);
-  };
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    if (user) navigate("/dashboard");
+  }, [user, loading, navigate]);
 
   return (
     <div className="flex flex-col items-center">
       <h1>Log In</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          <p>Username</p>
-          <input type="text" onChange={(e) => setUserName(e.target.value)} />
-        </label>
-        <label>
-          <p>Password</p>
-          <input
-            type="password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        <div>
-          <button type="submit">Submit</button>
-        </div>
-      </form>
+      <p>Username</p>
+      <input
+        type="text"
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="E-mail Address"
+      />
+      <p>Password</p>
+      <input
+        type="password"
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+      <div>
+        <button
+          type="submit"
+          onClick={() => logInWithEmailAndPassword(email, password)}
+        >
+          Submit
+        </button>
+      </div>
+      <div>
+        <Link to="/reset"></Link>
+      </div>
+      <div>
+        Don't have an account? <Link to="/register">Register</Link> now!
+      </div>
     </div>
   );
 }
